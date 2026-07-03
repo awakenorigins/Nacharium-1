@@ -353,10 +353,39 @@ async fn attestation_verify(Json(req): Json<AttestReq>) -> Json<AttestResp> {
     }
 }
 
+#[derive(Deserialize)]
+struct HarmonyReq { #[serde(default)] network: f64, #[serde(default)] economy: f64, #[serde(default)] social: f64, #[serde(default)] resource: f64 }
+#[derive(Serialize)]
+struct HarmonyResp { harmony: f64 }
+
+/// POST /api/v1/harmony — ecosystem health score.
+async fn harmony_score(Json(r): Json<HarmonyReq>) -> Json<HarmonyResp> {
+    use nacharium_physics::harmony::{harmony, HarmonyInputs};
+    let h = harmony(&HarmonyInputs { network: r.network, economy: r.economy, social: r.social, resource: r.resource });
+    Json(HarmonyResp { harmony: h })
+}
+
+#[derive(Deserialize)]
+struct WeaveEdge { a: String, b: String, resonance: f64 }
+#[derive(Deserialize)]
+struct WeaveReq { edges: Vec<WeaveEdge> }
+
+/// POST /api/v1/weave/cellmap — build The Weave / Cell Map from edges.
+async fn weave_cellmap(Json(req): Json<WeaveReq>) -> Json<serde_json::Value> {
+    use nacharium_physics::weave::Weave;
+    let mut w = Weave::new();
+    for e in &req.edges {
+        w.weave(&e.a, &e.b, e.resonance);
+    }
+    Json(serde_json::json!({ "cell_map": w.cell_map(), "density": w.density(), "most_woven": w.most_woven() }))
+}
+
 pub fn app(store: Store) -> Router {
     Router::new()
         .route("/", get(index))
         .route("/.well-known/agent.json", get(agent_card))
+        .route("/api/v1/harmony", post(harmony_score))
+        .route("/api/v1/weave/cellmap", post(weave_cellmap))
         .route("/api/v1/membrane/cross", post(membrane_cross))
         .route("/api/v1/attestation/verify", post(attestation_verify))
         .route("/health", get(health))

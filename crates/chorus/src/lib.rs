@@ -13,6 +13,7 @@
 
 pub mod jury;
 pub mod config;
+pub mod super_chorus;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

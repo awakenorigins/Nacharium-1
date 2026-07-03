@@ -7,6 +7,7 @@
 #![forbid(unsafe_code)]
 
 pub mod node_types;
+pub mod mesh;
 
 use libp2p::{
     gossipsub, identify, ping,

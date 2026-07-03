@@ -11,6 +11,8 @@
 #![forbid(unsafe_code)]
 
 pub mod resonance;
+pub mod weave;
+pub mod harmony;
 
 use serde::{Deserialize, Serialize};
 
