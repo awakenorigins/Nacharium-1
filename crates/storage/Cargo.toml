@@ -1,0 +1,19 @@
+[package]
+name = "nacharium-storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nacharium-core = { path = "../core" }
+nacharium-identity = { path = "../identity" }
+nacharium-economy = { path = "../economy" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio = { workspace = true }
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "macros", "chrono"] }
+
+[dev-dependencies]
+tokio = { workspace = true }

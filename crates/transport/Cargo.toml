@@ -1,0 +1,17 @@
+[package]
+name = "nacharium-transport"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nacharium-core = { path = "../core" }
+serde.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tokio = { workspace = true }
+futures = "0.3"
+libp2p = { version = "0.54", features = ["tokio", "gossipsub", "identify", "ping", "noise", "yamux", "tcp", "macros"] }
+
+[dev-dependencies]
+tokio = { workspace = true }

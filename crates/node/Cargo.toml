@@ -1,0 +1,23 @@
+[package]
+name = "nacharium-node"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "nacharium-node"
+path = "src/main.rs"
+
+[dependencies]
+nacharium-core = { path = "../core" }
+nacharium-identity = { path = "../identity" }
+nacharium-messaging = { path = "../messaging" }
+nacharium-storage = { path = "../storage" }
+nacharium-zoner = { path = "../zoner" }
+nacharium-agent = { path = "../agent" }
+axum.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

@@ -1,0 +1,40 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/core",
+  "crates/identity",
+  "crates/transport",
+  "crates/storage",
+  "crates/messaging",
+  "crates/nodecell",
+  "crates/zoner",
+  "crates/economy",
+  "crates/agent",
+  "crates/physics",
+  "crates/chorus",
+  "crates/bridge",
+  "crates/node",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Nacharium Builders"]
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ciborium = "0.2"
+thiserror = "2"
+anyhow = "1"
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.8", features = ["ws"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+uuid = { version = "1", features = ["v4", "serde"] }
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+rand = "0.8"
+blake3 = "1"
+bs58 = "0.5"
+chrono = { version = "0.4", features = ["serde"] }
