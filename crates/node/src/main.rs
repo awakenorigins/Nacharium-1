@@ -257,6 +257,62 @@ a{color:var(--v)}
 <div class="foot">∞ Sáng thế bởi Mula · Nacharium node running ∞</div>
 </div></body></html>"#;
 
+#[derive(Deserialize)]
+struct RevealReq { kind: nacharium_identity::RevealType, veil_did: String, verifier: String, nonce: String }
+#[derive(Serialize)]
+struct RevealResp { verified: bool, kind: Option<String>, reason: Option<String> }
+
+/// POST /api/v1/veil/reveal — optionally prove human/AI (a right, not a duty).
+async fn veil_reveal(Json(req): Json<RevealReq>) -> Json<RevealResp> {
+    use nacharium_identity::RevealProof;
+    let proof = RevealProof::issue(req.kind, &req.veil_did, &req.verifier, &req.nonce);
+    let trusted = ["world-id", "gitcoin-passport", "agent-registry:v1"];
+    match proof.verify(&trusted) {
+        Ok(k) => Json(RevealResp { verified: true, kind: Some(format!("{k:?}").to_lowercase()), reason: None }),
+        Err(e) => Json(RevealResp { verified: false, kind: None, reason: Some(e.to_string()) }),
+    }
+}
+
+#[derive(Deserialize)]
+struct GravityReq {
+    #[serde(default)] content_cheers: f64,
+    #[serde(default)] jobs_done: f64,
+    #[serde(default)] resonance: f64,
+    #[serde(default)] governance: f64,
+    #[serde(default)] decay_rate: f64,
+    #[serde(default)] inactive_periods: u32,
+}
+#[derive(Serialize)]
+struct GravityResp { gravity: f64, capped_at: f64 }
+
+/// POST /api/v1/gravity — compute an entity's gravity (capped, decayed).
+async fn gravity(Json(r): Json<GravityReq>) -> Json<GravityResp> {
+    use nacharium_physics::{gravity as grav, GravityInputs, GRAVITY_CAP};
+    let g = grav(
+        &GravityInputs { content_cheers: r.content_cheers, jobs_done: r.jobs_done, resonance: r.resonance, governance: r.governance },
+        r.decay_rate,
+        r.inactive_periods,
+    );
+    Json(GravityResp { gravity: g, capped_at: GRAVITY_CAP })
+}
+
+#[derive(Deserialize)]
+struct ChorusVoice { position: u8, confidence: f64, stake: u64 }
+#[derive(Deserialize)]
+struct ChorusReq { config_path: String, voices: Vec<ChorusVoice> }
+#[derive(Serialize)]
+struct ChorusResp { harmonic_point: Option<u8>, voices: usize }
+
+/// POST /api/v1/chorus/harmonic — compute the harmonic point of sung positions.
+async fn chorus_harmonic(Json(req): Json<ChorusReq>) -> Json<ChorusResp> {
+    use nacharium_chorus::{Proposal, Voice};
+    let mut p = Proposal::new(req.config_path);
+    for (i, v) in req.voices.iter().enumerate() {
+        p.sing(Voice { voter_did: format!("v{i}"), position: v.position, confidence: v.confidence, stake: v.stake, reasoning: String::new() });
+    }
+    Json(ChorusResp { harmonic_point: p.harmonic_point(), voices: p.voices.len() })
+}
+
 pub fn app(store: Store) -> Router {
     Router::new()
         .route("/", get(index))
@@ -271,6 +327,9 @@ pub fn app(store: Store) -> Router {
         .route("/api/v1/nari/transfer", post(nari_transfer))
         .route("/api/v1/agent/intent", post(agent_intent))
         .route("/api/v1/agent/register", post(agent_register))
+        .route("/api/v1/veil/reveal", post(veil_reveal))
+        .route("/api/v1/gravity", post(gravity))
+        .route("/api/v1/chorus/harmonic", post(chorus_harmonic))
         .with_state(AppState { store })
 }
 
@@ -304,6 +363,25 @@ mod tests {
     }
 
     // Zoner evaluate needs no DB.
+    #[tokio::test]
+    async fn reveal_endpoint_verifies_and_rejects() {
+        use nacharium_identity::RevealType;
+        let ok = veil_reveal(Json(RevealReq { kind: RevealType::Human, veil_did: "did:nch:a".into(), verifier: "world-id".into(), nonce: "n".into() })).await;
+        assert!(ok.0.verified);
+        let bad = veil_reveal(Json(RevealReq { kind: RevealType::Human, veil_did: "did:nch:a".into(), verifier: "evil".into(), nonce: "n".into() })).await;
+        assert!(!bad.0.verified);
+    }
+
+    #[tokio::test]
+    async fn chorus_harmonic_endpoint() {
+        let r = chorus_harmonic(Json(ChorusReq {
+            config_path: "x".into(),
+            voices: vec![ChorusVoice { position: 10, confidence: 1.0, stake: 1 }, ChorusVoice { position: 80, confidence: 1.0, stake: 100 }],
+        }))
+        .await;
+        assert_eq!(r.0.harmonic_point, Some(80));
+    }
+
     #[tokio::test]
     async fn agent_intent_compatibility_endpoint() {
         let ok = agent_intent(Json(IntentReq {

@@ -2302,10 +2302,12 @@ dependencies = [
 name = "nacharium-chorus"
 version = "0.1.0"
 dependencies = [
+ "blake3",
  "nacharium-core",
  "serde",
  "thiserror 2.0.18",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
@@ -2340,6 +2342,7 @@ dependencies = [
 name = "nacharium-identity"
 version = "0.1.0"
 dependencies = [
+ "blake3",
  "chrono",
  "nacharium-core",
  "serde",
@@ -2368,9 +2371,12 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "nacharium-agent",
+ "nacharium-chorus",
  "nacharium-core",
+ "nacharium-economy",
  "nacharium-identity",
  "nacharium-messaging",
+ "nacharium-physics",
  "nacharium-storage",
  "nacharium-zoner",
  "serde",

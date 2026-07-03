@@ -12,6 +12,7 @@
 
 pub mod escrow;
 pub mod reputation;
+pub mod marketplace;
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

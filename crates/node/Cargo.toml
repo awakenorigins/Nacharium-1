@@ -15,6 +15,9 @@ nacharium-messaging = { path = "../messaging" }
 nacharium-storage = { path = "../storage" }
 nacharium-zoner = { path = "../zoner" }
 nacharium-agent = { path = "../agent" }
+nacharium-economy = { path = "../economy" }
+nacharium-physics = { path = "../physics" }
+nacharium-chorus = { path = "../chorus" }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true
