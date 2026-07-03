@@ -12,6 +12,7 @@
 #![forbid(unsafe_code)]
 
 pub mod jury;
+pub mod config;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

@@ -19,6 +19,8 @@ nacharium-economy = { path = "../economy" }
 nacharium-physics = { path = "../physics" }
 nacharium-chorus = { path = "../chorus" }
 nacharium-agent-sdk = { path = "../agent-sdk" }
+nacharium-bridge = { path = "../bridge" }
+nacharium-nodecell = { path = "../nodecell" }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true

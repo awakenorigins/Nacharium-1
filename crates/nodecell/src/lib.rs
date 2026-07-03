@@ -6,6 +6,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod darkzone;
+
 use nacharium_transport::NodeType;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

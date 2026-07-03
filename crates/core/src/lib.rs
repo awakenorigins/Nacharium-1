@@ -13,6 +13,7 @@ pub mod protocol;
 pub mod crypto;
 pub mod did;
 pub mod envelope;
+pub mod temporal;
 
 pub use did::VeilDid;
 pub use protocol::{PhysicsLaw, Protocol, PROTOCOLS, PHYSICS_LAWS};

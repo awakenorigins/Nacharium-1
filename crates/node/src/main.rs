@@ -325,10 +325,40 @@ async fn agent_card() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "agent_card": card, "mcp_tools": nacharium_mcp_tools() }))
 }
 
+#[derive(Deserialize)]
+struct MembraneReq { zone: nacharium_bridge::MembraneZone, #[serde(default)] compliance_ok: bool }
+#[derive(Serialize)]
+struct MembraneResp { allowed: bool, friction: u8, requires_compliance: bool }
+
+/// POST /api/v1/membrane/cross — evaluate a Reality Bridge crossing.
+async fn membrane_cross(Json(req): Json<MembraneReq>) -> Json<MembraneResp> {
+    use nacharium_bridge::Crossing;
+    let c = Crossing { zone: req.zone, compliance_ok: req.compliance_ok };
+    Json(MembraneResp { allowed: c.allowed(), friction: req.zone.friction(), requires_compliance: req.zone.requires_compliance() })
+}
+
+#[derive(Deserialize)]
+struct AttestReq { claim: String, pseudonym: String, issuer: String, nonce: String }
+#[derive(Serialize)]
+struct AttestResp { verified: bool, claim: Option<String> }
+
+/// POST /api/v1/attestation/verify — verify a Portable Attestation (no doxx).
+async fn attestation_verify(Json(req): Json<AttestReq>) -> Json<AttestResp> {
+    use nacharium_bridge::attestation::Attestation;
+    let a = Attestation::issue(&req.claim, &req.pseudonym, &req.issuer, &req.nonce);
+    let trusted = ["nacharium-registry", "world-id", "gitcoin-passport"];
+    match a.verify(&trusted) {
+        Ok(c) => Json(AttestResp { verified: true, claim: Some(c.to_string()) }),
+        Err(_) => Json(AttestResp { verified: false, claim: None }),
+    }
+}
+
 pub fn app(store: Store) -> Router {
     Router::new()
         .route("/", get(index))
         .route("/.well-known/agent.json", get(agent_card))
+        .route("/api/v1/membrane/cross", post(membrane_cross))
+        .route("/api/v1/attestation/verify", post(attestation_verify))
         .route("/health", get(health))
         .route("/api/v1/veil", post(create_veil))
         .route("/api/v1/veil/register", post(register))
@@ -376,6 +406,21 @@ mod tests {
     }
 
     // Zoner evaluate needs no DB.
+    #[tokio::test]
+    async fn membrane_financial_needs_compliance() {
+        use nacharium_bridge::MembraneZone;
+        let blocked = membrane_cross(Json(MembraneReq { zone: MembraneZone::Financial, compliance_ok: false })).await;
+        assert!(!blocked.0.allowed);
+        let ok = membrane_cross(Json(MembraneReq { zone: MembraneZone::Knowledge, compliance_ok: false })).await;
+        assert!(ok.0.allowed);
+    }
+
+    #[tokio::test]
+    async fn attestation_endpoint_verifies_trusted() {
+        let r = attestation_verify(Json(AttestReq { claim: "reputation>=500".into(), pseudonym: "p".into(), issuer: "nacharium-registry".into(), nonce: "n".into() })).await;
+        assert!(r.0.verified);
+    }
+
     #[tokio::test]
     async fn reveal_endpoint_verifies_and_rejects() {
         use nacharium_identity::RevealType;

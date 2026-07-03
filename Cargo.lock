@@ -2300,8 +2300,10 @@ dependencies = [
 name = "nacharium-bridge"
 version = "0.1.0"
 dependencies = [
+ "blake3",
  "nacharium-core",
  "serde",
+ "serde_json",
  "thiserror 2.0.18",
  "tracing",
 ]
@@ -2380,11 +2382,13 @@ dependencies = [
  "axum",
  "nacharium-agent",
  "nacharium-agent-sdk",
+ "nacharium-bridge",
  "nacharium-chorus",
  "nacharium-core",
  "nacharium-economy",
  "nacharium-identity",
  "nacharium-messaging",
+ "nacharium-nodecell",
  "nacharium-physics",
  "nacharium-storage",
  "nacharium-zoner",
