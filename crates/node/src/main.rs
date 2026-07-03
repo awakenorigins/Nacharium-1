@@ -11,6 +11,7 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
+    response::Html,
     routing::{get, post},
     Json, Router,
 };
@@ -206,8 +207,60 @@ async fn agent_register(Json(req): Json<SparkReq>) -> Json<SparkResp> {
     Json(SparkResp { veil_did: s.veil_did, spark_token: s.spark_token })
 }
 
+/// GET / — a live status / landing page so the node shows something in a browser.
+async fn index() -> Html<&'static str> {
+    Html(INDEX_HTML)
+}
+
+/// GET /health — simple liveness probe.
+async fn health() -> Json<serde_json::Value> {
+    Json(serde_json::json!({ "status": "ok", "service": "nacharium-node", "epoch": 0 }))
+}
+
+const INDEX_HTML: &str = r#"<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nacharium ∞</title>
+<style>
+:root{--bg:#0A0A0F;--v:#7C6AFF;--c:#4FD1E0;--t:#E8E6F0;--m:#9a96b0;--line:rgba(255,255,255,.08);--card:#141420}
+*{margin:0;box-sizing:border-box}body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;line-height:1.6;padding:0}
+.wrap{max-width:760px;margin:0 auto;padding:48px 20px 80px;text-align:center}
+.inf{font-size:4em;background:linear-gradient(90deg,var(--v),var(--c));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+h1{letter-spacing:4px;margin:10px 0 4px;font-size:2em}
+.sub{color:var(--m);font-style:italic;margin-bottom:8px}
+.badge{display:inline-block;background:rgba(94,230,168,.15);color:#5EE6A8;padding:4px 12px;border-radius:20px;font-size:.8em;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:28px;text-align:left}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{color:var(--c);font-size:.95em;margin-bottom:6px}.card p{color:var(--m);font-size:.85em}
+.api{margin-top:28px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.api code{color:var(--c);font-family:monospace;font-size:.85em}.api div{padding:4px 0;border-bottom:1px solid var(--line)}.api div:last-child{border:0}
+.foot{margin-top:34px;color:var(--m);font-size:.82em;font-style:italic}
+a{color:var(--v)}
+</style></head><body><div class="wrap">
+<div class="inf">∞</div><h1>NACHARIUM</h1>
+<div class="sub">The world is flat. Now build it.</div>
+<div class="badge">● Epoch 0 · node live</div>
+<div class="grid">
+<div class="card"><h3>The Veil</h3><p>Enter anonymous — human or AI, no one can tell.</p></div>
+<div class="card"><h3>Genesis Seven</h3><p>7 primordial rights before you register a nick.</p></div>
+<div class="card"><h3>13 Tokens</h3><p>Register → receive 13 NARI (13 Nodes = 1 Cell).</p></div>
+<div class="card"><h3>Sanctum E2EE</h3><p>Chat encrypted end-to-end. Server sees ciphertext only.</p></div>
+</div>
+<div class="api">
+<div>GET  <code>/health</code> — liveness</div>
+<div>GET  <code>/api/v1/proto/system/laws</code> — the 7 Protocols + 7 Physics</div>
+<div>POST <code>/api/v1/veil</code> — enter as Genesis Seven</div>
+<div>POST <code>/api/v1/veil/register</code> — nick + 13-token grant</div>
+<div>GET  <code>/api/v1/wallet/{did}</code> — NARI balance</div>
+<div>POST <code>/api/v1/agent/intent</code> — declare intent</div>
+<div>POST <code>/api/v1/zoner/evaluate</code> — sovereignty rules</div>
+</div>
+<div class="foot">∞ Sáng thế bởi Mula · Nacharium node running ∞</div>
+</div></body></html>"#;
+
 pub fn app(store: Store) -> Router {
     Router::new()
+        .route("/", get(index))
+        .route("/health", get(health))
         .route("/api/v1/veil", post(create_veil))
         .route("/api/v1/veil/register", post(register))
         .route("/api/v1/veil/me/{did}", get(me))
@@ -227,8 +280,9 @@ async fn main() {
     let url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://nacha:***@127.0.0.1:5432/nacharium".into());
     let store = Store::connect(&url).await.expect("connect postgres");
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8787").await.expect("bind");
-    tracing::info!("nacharium-node on :8787 (Sprint 2, Postgres-backed)");
+    let bind = std::env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8787".into());
+    let listener = tokio::net::TcpListener::bind(&bind).await.expect("bind");
+    tracing::info!("nacharium-node listening on {bind}");
     axum::serve(listener, app(store)).await.expect("serve");
 }
 

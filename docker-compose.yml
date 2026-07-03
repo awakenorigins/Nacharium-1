@@ -10,8 +10,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-    ports:
-      - "127.0.0.1:5432:5432"
+    # Postgres is reachable ONLY on the internal docker network (private, not on host).
+    expose:
+      - "5432"
     volumes:
       - nacha_pg:/var/lib/postgresql/data
 
@@ -22,8 +23,10 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-nacha}:${POSTGRES_PASSWORD:-nacha}@postgres:5432/${POSTGRES_DB:-nacharium}
+    # Bound to the Tailscale IP only: reachable inside the private Tailnet,
+    # NOT exposed to the public internet.
     ports:
-      - "127.0.0.1:8787:8787"
+      - "${NACHA_BIND_IP:-127.0.0.1}:8787:8787"
     restart: unless-stopped
 
 volumes:
