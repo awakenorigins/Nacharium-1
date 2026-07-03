@@ -313,9 +313,22 @@ async fn chorus_harmonic(Json(req): Json<ChorusReq>) -> Json<ChorusResp> {
     Json(ChorusResp { harmonic_point: p.harmonic_point(), voices: p.voices.len() })
 }
 
+/// GET /.well-known/agent.json — A2A Agent Card + MCP tool surface for builders.
+async fn agent_card() -> Json<serde_json::Value> {
+    use nacharium_agent_sdk::{nacharium_mcp_tools, AgentCard};
+    let card = AgentCard::new(
+        "nacharium-node",
+        "did:nch:node",
+        "/api/v1",
+        vec!["identity".into(), "economy".into(), "governance".into(), "marketplace".into()],
+    );
+    Json(serde_json::json!({ "agent_card": card, "mcp_tools": nacharium_mcp_tools() }))
+}
+
 pub fn app(store: Store) -> Router {
     Router::new()
         .route("/", get(index))
+        .route("/.well-known/agent.json", get(agent_card))
         .route("/health", get(health))
         .route("/api/v1/veil", post(create_veil))
         .route("/api/v1/veil/register", post(register))
