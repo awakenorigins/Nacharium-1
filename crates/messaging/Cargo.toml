@@ -1,0 +1,16 @@
+[package]
+name = "nacharium-messaging"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+nacharium-core = { path = "../core" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+openmls = "0.6"
+openmls_rust_crypto = "0.3"
+openmls_basic_credential = "0.3"
+openmls_traits = "0.3"

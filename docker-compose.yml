@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nacha}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nacha}
+      POSTGRES_DB: ${POSTGRES_DB:-nacharium}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nacha} -d ${POSTGRES_DB:-nacharium}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Postgres is reachable ONLY on the internal docker network (private, not on host).
+    expose:
+      - "5432"
+    volumes:
+      - nacha_pg:/var/lib/postgresql/data
+
+  node:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-nacha}:${POSTGRES_PASSWORD:-nacha}@postgres:5432/${POSTGRES_DB:-nacharium}
+    # Bound to the Tailscale IP only: reachable inside the private Tailnet,
+    # NOT exposed to the public internet.
+    ports:
+      - "${NACHA_BIND_IP:-127.0.0.1}:8787:8787"
+    restart: unless-stopped
+
+volumes:
+  nacha_pg:
